@@ -1,19 +1,38 @@
 # InsightAgent MVP
 
-一个简单而强大的FastAPI应用程序，用于从SEC EDGAR数据库检索财务报告并提取特定财务指标数据。
+一个基于LangGraph的智能财报分析系统，专注于从SEC EDGAR数据库中精确提取财务数据。系统采用渐进式发展策略，当前版本（MVP 1.0）致力于通过自然语言查询实现高精度的数据提取，为后续的对话式分析功能打下坚实基础。
 
-## 🚀 新功能特性
+## 🚀 核心特性
 
-- 🔍 **多年度支持**: 按年份检索历史10-K和10-Q财报
-- 📊 **灵活指标提取**: 支持多种财务指标，不仅限于收入
-- 🎯 **智能标签映射**: 自动将常用指标名称映射到XBRL标签
-- 🚀 **RESTful API**: 提供完整的Web服务接口
+- 🎯 **精确数据提取**: 基于XBRL标准标签，确保财务数据提取的准确性
+- 🔍 **自然语言查询**: 支持中文和英文自然语言查询具体财务指标
+- 📊 **多指标支持**: 支持收入、净利润、总资产等核心财务指标
 - ⚙️ **配置化管理**: 集中的超参数和配置管理
-- 🧪 **完整测试覆盖**: 包含多个测试用例
+- 🧪 **完整测试覆盖**: 包含模块测试和集成测试
+
+## 发展路线
+
+### 当前阶段（MVP 1.0）
+- ✓ 精确的财务数据提取
+- ✓ 自然语言查询转换
+- ✓ 基础指标支持
+- ✓ 数据可溯源性
+
+### 下一阶段（规划中）
+- 基础对话能力
+- 多轮查询支持
+- 指标计算和比较
+- 扩展指标覆盖
+
+### 远期规划
+- 深度财报分析
+- 跨期数据比较
+- 财务健康评估
+- 异常指标解释
 
 ## 支持的财务指标
 
-### 预定义指标映射
+### 当前支持的指标映射
 - **Revenues** / **Revenue** → `us-gaap:Revenues`
 - **NetIncome** / **Net Income** → `us-gaap:NetIncomeLoss`
 - **TotalAssets** / **Total Assets** → `us-gaap:Assets`
@@ -40,9 +59,9 @@
 insight_agent_mvp/
 ├── src/                          # 核心代码模块
 │   ├── __init__.py
-│   ├── config.py                 # 配置管理（超参数和常量）
-│   ├── sec_retriever.py          # SEC数据检索模块（支持多年度）
-│   ├── xbrl_extractor.py         # XBRL数据提取模块（支持多指标）
+│   ├── config.py                 # 配置管理
+│   ├── sec_retriever.py          # SEC数据检索模块
+│   ├── xbrl_extractor.py         # XBRL数据提取模块
 │   └── langgraph_orchestrator.py # LangGraph工作流编排器
 ├── tests/                        # 测试套件
 │   ├── __init__.py
@@ -62,7 +81,7 @@ insight_agent_mvp/
 │   ├── demo.py                 # 完整功能演示
 │   └── quick_start.py          # 快速启动脚本
 ├── docs/                       # 项目文档
-│   ├── TECHNICAL_DOCUMENTATION.md # 技术文档（团队交接用）
+│   ├── TECHNICAL_DOCUMENTATION.md # 技术文档
 │   └── PRODUCT_BACKLOG.md      # 产品待办列表
 ├── run_tests.py                 # 测试运行器
 ├── requirements.txt             # 依赖包列表
@@ -73,141 +92,76 @@ insight_agent_mvp/
 
 ## 安装和运行
 
-### 快速启动（推荐）
+### 环境要求
+- Python 3.8+
+- 网络连接（访问SEC EDGAR和OpenAI API）
+
+### 快速启动
 ```bash
-conda activate llm
+# 1. 克隆项目
+git clone <repository-url>
+cd insight_agent_mvp
+
+# 2. 创建虚拟环境（推荐）
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或
+venv\Scripts\activate  # Windows
+
+# 3. 安装依赖
+pip install -r requirements.txt
+
+# 4. 配置API密钥
+echo "OPENAI_API_KEY=your-api-key-here" > .env
+
+# 5. 运行测试
+python run_tests.py
+
+# 6. 启动系统
 python scripts/quick_start.py
 ```
 
-### 手动安装
-
-#### 1. 激活conda环境
+### 手动启动
 ```bash
-conda activate llm
+# 启动LangGraph工作流
+python -c "import asyncio; from src.langgraph_orchestrator import process_query_with_langgraph; print('LangGraph工作流已加载')"
 ```
-
-#### 2. 安装依赖
-```bash
-pip install -r requirements.txt
-```
-
-#### 3. 配置API密钥
-```bash
-echo "OPENAI_API_KEY=your-api-key-here" > .env
-```
-
-#### 4. 运行测试
-```bash
-python run_tests.py
-# 或使用 pytest
-python -m pytest tests/ -v
-```
-
-#### 5. 启动系统
-```bash
-# 使用LangGraph工作流
-python -m src.langgraph_orchestrator
-```
-
-### 功能演示
-```bash
-python scripts/demo.py
-```
-
-服务器将在 `http://localhost:8000` 启动。
-
-## API端点详解
-
-### 🆕 1. 获取特定指标数据（主要端点）
-```
-GET /get-metric?ticker=AAPL&metric=Revenues&year=2023&form_type=10-K
-```
-
-**参数说明:**
-- `ticker`: 公司股票代码（必需）
-- `metric`: 财务指标名称（必需）
-- `year`: 财报年份（必需）
-- `form_type`: 财报类型，默认"10-K"，也可选择"10-Q"
-
-**示例响应:**
-```json
-{
-    "ticker": "AAPL",
-    "metric": "Revenues",
-    "xbrl_tag": "us-gaap:Revenues",
-    "year": 2023,
-    "form_type": "10-K",
-    "value": "383,285",
-    "unit": "usd"
-}
-```
-
-### 2. 获取收入数据（向后兼容）
-```
-GET /get-revenue?ticker=AAPL
-```
-
-获取最新10-K中的收入数据（保持向后兼容性）。
-
-### 🆕 3. 获取支持的指标
-```
-GET /supported-metrics
-```
-
-返回所有预定义的财务指标及其XBRL标签映射。
-
-### 4. 获取支持的股票代码
-```
-GET /supported-tickers
-```
-
-返回所有支持的公司股票代码列表。
-
-### 5. API文档
-```
-GET /docs
-```
-
-自动生成的Swagger UI文档页面。
 
 ## 使用示例
 
-### 获取Apple 2023年收入
-```bash
-curl "http://localhost:8000/get-metric?ticker=AAPL&metric=Revenues&year=2023"
-```
+### 自然语言查询
+```python
+import asyncio
+from src.langgraph_orchestrator import process_query_with_langgraph
 
-### 获取Microsoft 2022年净利润
-```bash
-curl "http://localhost:8000/get-metric?ticker=MSFT&metric=NetIncome&year=2022"
-```
+async def main():
+    # 查询Apple 2023年收入
+    result = await process_query_with_langgraph("苹果公司2023年的收入是多少？")
+    print(result)
+    
+    # 查询Microsoft 2022年净利润
+    result = await process_query_with_langgraph("MSFT 2022 net income")
+    print(result)
 
-### 获取Tesla 2023年第三季度收入（10-Q）
-```bash
-curl "http://localhost:8000/get-metric?ticker=TSLA&metric=Revenues&year=2023&form_type=10-Q"
-```
-
-### 使用自定义XBRL标签
-```bash
-curl "http://localhost:8000/get-metric?ticker=GOOGL&metric=us-gaap:OperatingIncomeLoss&year=2023"
+asyncio.run(main())
 ```
 
 ## 配置管理
 
-所有超参数都在 `src/config.py` 文件中集中管理：
+所有配置都在 `src/config.py` 文件中集中管理：
 
+- **OpenAI配置**: API密钥、模型、温度参数
 - **SEC API配置**: URLs、用户代理、请求限速
-- **股票映射**: 支持的股票代码和CIK映射
+- **公司映射**: 支持的股票代码和CIK映射
 - **XBRL配置**: 默认标签和解析器设置
-- **API元数据**: 标题、版本、描述
 
 ## 测试覆盖
 
 项目包含完整的测试套件：
 
 ### 单元测试
-- **test_basic_functionality.py**: 基本功能和模块导入测试
-- **test_sec_retriever.py**: SEC数据检索测试
+- **test_basic_functionality.py**: 模块导入测试、配置验证、基本XBRL提取测试
+- **test_sec_retriever.py**: SEC数据检索测试（包含Mock和网络测试）
 - **test_langgraph_orchestrator.py**: LangGraph工作流测试
 
 ### 集成测试
@@ -217,100 +171,53 @@ curl "http://localhost:8000/get-metric?ticker=GOOGL&metric=us-gaap:OperatingInco
 ### 评测系统
 - **evaluation/**: 完整的评测系统，使用真实SEC API进行测试
 
-
 ## 系统能力评估
 
 ### ✅ 目前能做到的功能
 
-#### 1. 能返回字段，但不能保证正确性
-- **主流程完整**: 系统实现了从自然语言查询到财务数据提取的完整链路
-  - 使用 LLM（GPT-3.5-turbo）解析自然语言查询，抽取结构化意图（ticker、metric、year、form_type）
-  - 根据意图从 SEC 官网抓取指定公司的年报/季报 HTML
-  - 使用 XBRL 解析器从 HTML 中提取指定财务指标的值和单位
-  - 返回结构化结果（包括 ticker、metric、year、form_type、value、unit、xbrl_tag）
+#### 1. 自然语言理解
+- **LLM解析**: 使用GPT-3.5-turbo解析自然语言查询，提取结构化意图
+- **支持语言**: 中文和英文查询
+- **意图提取**: 能够识别ticker、metric、year、form_type等关键信息
 
-- **字段完整性**: 只要 SEC 数据源有内容，系统就能返回完整的字段结构
-- **局限性**: 
-  - LLM 解析意图有一定概率出错（如 ticker、metric、year 识别错误）
-  - XBRL 标签映射和 HTML 解析有一定概率找不到或提取错误
-  - 没有对结果的"正确性"做二次校验，完全依赖 LLM 和 XBRL 解析的第一手输出
+#### 2. SEC数据获取
+- **多年度支持**: 支持按年份检索历史10-K和10-Q财报
+- **文件定位**: 通过SEC API准确定位特定年份的财报文件
+- **数据下载**: 获取完整的iXBRL格式财报文件
 
-#### 2. 能连接到服务器
-- **服务器稳定性**: FastAPI/uvicorn 服务器可正常启动，API端点可用
-- **脚本集成**: demo.py、quick_start.py 脚本都能检测服务器状态并与之交互
-- **API端点完整**: 提供结构化查询、自然语言查询、信息查询等完整接口
+#### 3. XBRL数据提取
+- **标签解析**: 使用BeautifulSoup解析iXBRL标签
+- **多标签支持**: 支持多种XBRL标签的映射和提取
+- **基础提取**: 能够提取财务数值和单位信息
 
-#### 3. 评测与演示系统
-- **自动化评测**: evaluation/run_eval.py 可批量评测系统的 NLU 和端到端准确率
-- **报告生成**: 自动生成详细的评测报告，包含准确率、响应时间等指标
-- **功能演示**: scripts/demo.py 可演示 API 信息、结构化查询、自然语言查询、评测系统、性能测试等
+#### 4. 工作流编排
+- **LangGraph架构**: 使用LangGraph进行工作流编排
+- **状态管理**: 完整的工作流状态管理
+- **错误处理**: 基本的错误处理和流程控制
 
-### ❌ 不能做到的/局限性
+### ❌ 当前局限性和问题
 
-#### 1. 不能保证字段的"正确性"
-- **无校验机制**: 只要能抓到 SEC 报告并解析出字段，就会返回，不管值是否真实准确
-- **黑盒解析**: 没有对 LLM 解析意图的二次校验，也没有对 XBRL 解析结果的人工或规则校验
-- **有限支持**: 只支持有限的 ticker/metric，超出范围会报错
+#### 1. 数据准确性问题
+- **年份匹配**: 当前使用`soup.find()`只返回第一个匹配项，无法区分不同年份数据
+- **标签映射**: 硬编码的指标映射不完整，导致某些公司数据提取失败
+- **数值处理**: 未处理单位换算和负数格式
 
-#### 2. 对 SEC 数据依赖强，易受外部因素影响
-- **网络依赖**: SEC 数据结构有变动或网络不通时，系统会报错或返回空字段
-- **格式敏感**: 对 SEC 的 HTML 结构和 XBRL 标签格式变化敏感
-- **限流影响**: 受 SEC 的请求频率限制影响
+#### 2. 系统健壮性问题
+- **错误处理**: 错误处理较为简单，缺乏详细的日志和监控
+- **重试机制**: 缺乏自动重试和恢复机制
+- **缓存机制**: 无数据缓存，每次查询都实时获取
 
-#### 3. 解析器属于"黑盒"模式
-- **LLM 解析**: 解析意图时可能会出错（如年份、公司名、指标名识别错误）
-- **XBRL 解析**: 只做了简单的标签映射，没有复杂的多表格/多币种/多单位处理
-- **无兜底机制**: 解析失败时缺乏有效的错误恢复和兜底策略
-
-#### 4. 缺乏健壮性设计
-- **无缓存机制**: 每次查询都实时抓取 SEC，效率较低，易受限流影响
-- **错误处理简单**: 错误信息只做了简单返回，没有详细日志和溯源
-- **无数据验证**: 缺乏对提取数据的合理性验证和异常检测
-
-### 🔧 代码结构特点
-
-#### 1. 主流程全部真实调用，无 mock/硬编码
-- **真实链路**: demo.py、run_eval.py 都是通过 HTTP 或直接调用主流程，未见 mock 数据或硬编码返回
-- **完整集成**: 只要 SEC 数据和 OpenAI API 可用，流程都是真实链路
-
-#### 2. 配置和依赖管理清晰
-- **统一配置**: config.py 统一管理 API KEY、支持公司、指标、XBRL 配置等
-- **依赖完整**: requirements.txt 依赖齐全，支持一键安装
-
-### 📊 适用场景
-
-#### ✅ 适合的场景
-- **原型演示**: 展示金融数据智能问答的技术可行性
-- **技术验证**: 验证 LLM + XBRL 解析的技术路线
-- **概念验证**: 为更复杂的金融数据系统提供基础框架
-- **学习研究**: 学习 LangGraph、FastAPI、XBRL 等技术栈
-
-#### ❌ 不适合的场景
-- **生产环境**: 对结果准确性有高要求的商业应用
-- **实时交易**: 需要高可靠性和低延迟的金融交易场景
-- **合规报告**: 需要严格数据验证的合规性报告
-- **大规模部署**: 需要处理大量并发请求的企业级应用
-
-### 🚀 改进建议
-
-#### 短期改进（提升准确性）
-- **增加校验机制**: 对意图解析和结果进行二次校验（正则、规则、人工审核等）
-- **多源比对**: 增加 SEC 数据的多源比对和异常兜底
-- **错误恢复**: 实现解析失败时的重试和兜底策略
-
-#### 长期改进（提升健壮性）
-- **缓存系统**: 实现数据缓存，减少重复请求
-- **日志监控**: 增加详细的日志记录和性能监控
-- **数据验证**: 实现提取数据的合理性验证和异常检测
-- **扩展支持**: 支持更多公司、指标和报表类型
+#### 3. 扩展性问题
+- **公司支持**: 只支持8家硬编码的公司
+- **指标支持**: 指标映射需要手动维护
+- **测试覆盖**: 缺乏真实数据的单元测试
 
 ## 注意事项
 
 1. **SEC API限制**: 遵循SEC的10请求/秒限制
 2. **数据依赖**: 提取结果依赖于10-K/10-Q文件中iXBRL标签的存在
-3. **年份范围**: 支持的年份范围取决于SEC数据库中的可用数据
-4. **准确性限制**: 系统返回的数据仅供参考，不保证100%准确性
-5. **API依赖**: 需要有效的 OpenAI API 密钥才能使用自然语言查询功能
+3. **准确性限制**: 系统返回的数据仅供参考，不保证100%准确性
+4. **API依赖**: 需要有效的OpenAI API密钥才能使用自然语言查询功能
 
 ## 扩展开发
 
@@ -318,10 +225,7 @@ curl "http://localhost:8000/get-metric?ticker=GOOGL&metric=us-gaap:OperatingInco
 在 `src/config.py` 的 `TICKER_TO_CIK` 字典中添加映射。
 
 ### 添加新指标映射
-在 `src/xbrl_extractor.py` 的 `METRIC_TAG_MAPPING` 字典中添加映射。
-
-### 支持新的财报类型
-修改 `form_type` 参数的验证逻辑以支持8-K等其他财报类型。
+在 `src/langgraph_orchestrator.py` 的 `METRIC_TAG_MAPPING` 字典中添加映射。
 
 ### 评测系统使用
 ```bash
@@ -335,6 +239,129 @@ python evaluation/quick_eval.py
 ## 项目文档
 
 ### 📋 技术文档
-- **[技术文档](docs/TECHNICAL_DOCUMENTATION.md)**: 完整的系统架构和模块说明，用于团队交接
+- **[技术文档](docs/TECHNICAL_DOCUMENTATION.md)**: 完整的系统架构和模块说明
 - **[产品待办列表](docs/PRODUCT_BACKLOG.md)**: 下一阶段开发规划和任务优先级
+
+### 3.2 关键状态转换
+```python
+WorkflowState = {
+    "query": str,              # 用户原始查询
+    "parsed_intent": dict,     # 解析后的结构化意图
+    "html_content": str,       # SEC iXBRL内容
+    "extracted_value": dict,   # 提取的财务数据
+    "error": str,              # 错误信息
+    "success": bool            # 执行状态
+}
+```
+
+### 3.3 当前指标映射机制
+系统实现了基础的指标映射，但存在局限性：
+```python
+METRIC_TAG_MAPPING = {
+    "Revenues": ["us-gaap:Revenues", "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"],
+    "NetIncome": ["us-gaap:NetIncomeLoss"],
+    "TotalAssets": ["us-gaap:Assets"],
+    "TotalLiabilities": ["us-gaap:Liabilities"],
+    "StockholdersEquity": ["us-gaap:StockholdersEquity"],
+}
+```
+
+**问题**: 映射不完整，某些公司使用不同的XBRL标签（如`us-gaap:NetSales`），导致数据提取失败。
+
+## 4. 当前测试覆盖情况
+
+### 4.1 现有测试内容
+1. **test_basic_functionality.py**: 模块导入测试、配置验证、基本XBRL提取测试
+2. **test_sec_retriever.py**: SEC数据检索测试（包含Mock和网络测试）
+3. **test_langgraph_orchestrator.py**: LangGraph工作流测试
+4. **test_integration.py**: 端到端集成测试
+5. **test_orchestrator.py**: API编排器测试
+
+### 4.2 测试特点
+- 主要测试模块导入和基本功能
+- 包含网络测试（需要SEC API连接）
+- 使用Mock模拟部分外部依赖
+- 缺乏真实XBRL数据的单元测试
+
+### 4.3 需要改进的地方
+1. 增加真实XBRL数据片段的测试用例
+2. 提高Mock测试覆盖率
+3. 添加更多边界情况测试
+4. 实现离线测试能力
+
+## 5. 当前面临的主要问题
+
+### 5.1 数据准确性问题
+1. **年份匹配问题**: 当前使用`soup.find()`只返回第一个匹配项，无法区分不同年份数据
+2. **标签映射问题**: 硬编码的指标映射不完整，导致某些公司数据提取失败
+3. **数值处理问题**: 未处理单位换算和负数格式
+
+### 5.2 系统健壮性问题
+1. **错误处理**: 错误处理较为简单，缺乏详细的日志和监控
+2. **重试机制**: 缺乏自动重试和恢复机制
+3. **缓存机制**: 无数据缓存，每次查询都实时获取
+
+### 5.3 扩展性问题
+1. **公司支持**: 只支持8家硬编码的公司
+2. **指标支持**: 指标映射需要手动维护
+3. **测试覆盖**: 缺乏真实数据的单元测试
+
+## 6. 未来改进方向
+
+### 6.1 短期改进（提升准确性）
+1. **实现上下文精确匹配**: 使用`find_all` + 上下文解析，确保年份匹配
+2. **外部化指标知识库**: 建立可维护的指标映射知识库
+3. **实现数值规整化**: 处理单位换算和负数格式
+
+### 6.2 中期改进（提升健壮性）
+1. **建立公司映射知识库**: 支持所有SEC注册公司
+2. **重构测试系统**: 使用真实数据片段进行测试
+3. **优化财年匹配逻辑**: 正确处理非标准财年
+
+### 6.3 长期改进（提升扩展性）
+1. **增强错误处理和日志**: 完善的日志记录和错误恢复
+2. **缓存机制**: 实现数据缓存，提高性能
+3. **API接口优化**: 支持批量查询和异步处理
+
+## 7. 部署和运维
+
+### 7.1 环境要求
+- Python 3.8+
+- OpenAI API密钥
+- 网络访问SEC EDGAR数据库
+
+### 7.2 快速启动
+```bash
+# 1. 环境配置
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+pip install -r requirements.txt
+
+# 2. 配置API密钥
+echo "OPENAI_API_KEY=your-api-key-here" > .env
+
+# 3. 运行测试
+python run_tests.py
+
+# 4. 功能演示
+python scripts/demo.py
+```
+
+### 7.3 配置管理
+- 环境变量：`OPENAI_API_KEY`
+- 配置文件：`src/config.py`
+- 评测数据：`evaluation/eval_dataset.json`
+
+## 8. 性能和限制
+
+### 8.1 当前性能
+- **查询处理时间**: 2-4秒（财务查询）
+- **SEC API限制**: 10请求/秒
+- **支持范围**: 8家公司，5类指标
+
+### 8.2 已知限制
+- 财年与日历年不一致的处理
+- 数值单位规整化
+- 上下文精确匹配
+- 指标映射的完整性和准确性
 

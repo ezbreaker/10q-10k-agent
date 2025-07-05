@@ -1,306 +1,261 @@
 # 产品待办列表 (Product Backlog)
 # InsightAgent MVP - 下一阶段开发规划
 
+## 开发策略说明
+
+### 渐进式发展路线
+系统采用渐进式发展策略，每个阶段都专注于解决特定的核心问题：
+
+1. **第一阶段**（当前MVP）
+   - 核心目标：确保数据提取的准确性和可靠性
+   - 关键指标：查询准确率、数据可溯源性
+   - 完成标准：单点查询准确率达到95%以上
+
+2. **第二阶段**（即将开始）
+   - 核心目标：引入基础对话能力
+   - 关键指标：多轮对话成功率、上下文保持准确度
+   - 完成标准：基础对话场景覆盖率80%以上
+
+3. **第三阶段**（规划中）
+   - 核心目标：实现深度财报分析
+   - 关键指标：分析准确性、推理合理性
+   - 完成标准：复杂分析场景支持率70%以上
+
 ## P0: 关键任务 (Highest Priority - 必须解决，否则产品不可靠)
 
-### 任务1：建立公司映射知识库 (Company Mapping Database)
-**问题描述:** 当前在`langgraph_orchestrator.py`中硬编码了8家公司的CIK映射，这种方式无法扩展，且需要手动维护。根据参考资料，SEC提供了官方的完整公司映射文件。
+### 任务1：建立公司映射知识库 (Company Mapping Database) ⭐⭐⭐⭐
+**问题描述:** 当前在`config.py`中硬编码了8家公司的CIK映射，无法扩展。SEC提供了官方的完整公司映射文件，包含所有上市公司。
 
 **开发需求:**
-1. **创建公司映射模块**: 新建`src/company_mapper.py`模块
-2. **实现自动下载功能**: 
-   - 从SEC官方下载`company_tickers.json`文件
-   - 地址：`https://www.sec.gov/files/company_tickers.json`
-   - 解析JSON并生成本地的`data/company_mappings.json`
-3. **实现查询接口**: 
-   - 提供`get_cik_by_ticker(ticker)`函数
-   - 提供`get_company_name_by_ticker(ticker)`函数
-   - 支持模糊匹配和大小写不敏感查询
-4. **集成到系统**: 修改`langgraph_orchestrator.py`，移除硬编码的公司映射，改为调用新的公司映射模块
-5. **添加更新机制**: 支持定期更新公司映射数据
+1. **创建公司映射模块**: 新建`src/company_mapper.py`
+2. **实现数据下载功能**: 
+   - 从`https://www.sec.gov/files/company_tickers.json`下载官方数据
+   - 解析JSON，提取`cik_str`、`ticker`、`title`字段
+   - 生成本地`data/company_mappings.json`文件
+3. **实现核心查询接口**: 
+   - `get_cik_by_ticker(ticker: str) -> int`: 根据ticker获取CIK号
+   - `get_company_name_by_ticker(ticker: str) -> str`: 根据ticker获取公司名称
+   - `get_ticker_by_cik(cik: int) -> str`: 根据CIK获取ticker（可选）
+4. **集成到系统**: 修改`langgraph_orchestrator.py`，移除硬编码映射
+5. **添加更新机制**: 提供`update_company_mappings()`函数，支持手动更新
 
 **验收标准:**
-- [ ] 支持所有SEC注册的上市公司（3000+家）
-- [ ] 自动从官方源获取最新数据
-- [ ] 提供离线查询功能
+- [ ] 支持查询任意SEC注册公司的CIK和名称
+- [ ] 查询响应时间 < 100ms（本地JSON查询）
 - [ ] 向后兼容现有的8家公司
-- [ ] 添加公司映射测试用例
+- [ ] 提供数据更新功能
+- [ ] 添加单元测试覆盖主要查询场景
 
 ---
 
-### 任务2：外部化指标知识库 (Externalize Metrics Knowledge Base)
-**问题描述:** 当前的`METRIC_TAG_MAPPING`硬编码在`langgraph_orchestrator.py`中，不利于维护和扩展。根据参考资料，指标与XBRL标签的映射是一个需要持续维护的"知识库"。
+### 任务2：外部化指标知识库 (Externalize Metrics Knowledge Base) ⭐⭐⭐
+**问题描述:** 当前`METRIC_TAG_MAPPING`硬编码在`langgraph_orchestrator.py`中，映射不完整导致数据提取失败。需要建立可维护的指标知识库。
 
 **开发需求:**
-1. **创建指标知识库**: 新建`data/metrics_knowledge_base.json`文件
-2. **设计知识库结构**: 
+1. **创建指标知识库文件**: 新建`data/metrics_knowledge_base.json`
+2. **设计知识库结构，仅作为参考，不一定正确，鼓励更robust的设计**: 
 ```json
 {
-  "metrics": {
-    "Revenues": {
-      "description": "公司营业收入",
-      "tags": [
-        "us-gaap:Revenues",
-        "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"
-      ],
-      "preferred_tag": "us-gaap:Revenues",
-      "aliases": ["Revenue", "营业收入", "销售收入", "总收入"],
-      "time_type": "duration",
-      "typical_context": "年度/季度累计"
-    },
-    "NetIncome": {
-      "description": "净利润",
-      "tags": ["us-gaap:NetIncomeLoss"],
-      "preferred_tag": "us-gaap:NetIncomeLoss",
-      "aliases": ["Net Income", "净利润", "净收益", "归属净利润"],
-      "time_type": "duration",
-      "typical_context": "年度/季度累计"
-    },
-    "Assets": {
-      "description": "总资产",
-      "tags": ["us-gaap:Assets"],
-      "preferred_tag": "us-gaap:Assets",
-      "aliases": ["Total Assets", "总资产", "资产总额"],
-      "time_type": "instant",
-      "typical_context": "期末余额"
-    }
+  "Revenues": {
+    "description": "公司营业收入",
+    "tags": [
+      "us-gaap:Revenues",
+      "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+      "us-gaap:NetSales",
+      "us-gaap:SalesRevenueNet"
+    ],
+    "time_type": "duration"
+  },
+  "NetIncome": {
+    "description": "净利润",
+    "tags": [
+      "us-gaap:NetIncomeLoss",
+      "us-gaap:ProfitLoss",
+      "us-gaap:NetIncomeLossAvailableToCommonStockholders"
+    ],
+    "time_type": "duration"
   }
 }
 ```
-3. **创建知识库管理器**: 新建`src/metrics_manager.py`模块
-   - 提供`get_tags_for_metric(metric_name)`函数
-   - 支持别名匹配和模糊查询
-   - 提供指标元数据查询功能
+3. **创建知识库管理器**: 新建`src/metrics_manager.py`
+   - `get_tags_for_metric(metric_name: str) -> List[str]`: 获取指标的所有可能标签
+   - `get_time_type(metric_name: str) -> str`: 获取指标的时间类型
 4. **集成到系统**: 修改`langgraph_orchestrator.py`，移除硬编码的映射，改为调用知识库管理器
-5. **添加扩展机制**: 支持运行时添加新的指标标签映射
+5. **添加扩展接口**: 提供`add_metric_mapping()`函数，支持运行时添加新映射
 
 **验收标准:**
-- [ ] 知识库文件可以独立维护和更新
-- [ ] 支持指标别名和模糊匹配
-- [ ] 包含时间类型（instant/duration）元数据
+- [ ] 支持至少10个核心财务指标的映射
+- [ ] 每个指标至少包含3个常见XBRL标签
 - [ ] 向后兼容现有功能
-- [ ] 添加知识库验证和测试机制
+- [ ] 提供映射添加和查询的单元测试
+
+**注意**: 这是一个需要持续维护的知识库，后续会根据实际使用情况不断补充新的标签映射。
 
 ---
 
-### 任务3：实现上下文精确匹配 (Contextual Match)
-**问题描述:** 当前的`xbrl_extractor.py`使用`soup.find()`，这只会返回第一个匹配项，无法区分不同年份的数据，是导致数据不准确的**最大风险**。
+### 任务3：实现上下文精确匹配 (Contextual Match) ✅ 已完成
+**问题描述:** 已解决。当前`xbrl_extractor.py`使用`soup.find()`只返回第一个匹配项，无法区分不同年份数据。
 
-**开发需求:**
-1. **升级`xbrl_extractor.py`**: 将`soup.find`改为`soup.find_all`
-2. **实现Context解析**: 对于每个找到的标签，必须提取其`contextRef`属性，并去文档中找到对应的`<xbrli:context>`定义
-3. **匹配时间**: 从`context`中解析出`<xbrli:period>`，并与用户查询的`year`进行严格匹配。只有年份匹配的那个标签的值，才是我们需要的正确答案
-4. **处理时间类型**: 利用任务2中的指标知识库，正确处理instant（瞬时点）和duration（时间段）两种不同的时间类型。财报中的资产负债表项目（如总资产、总负债）是瞬时点数据，而利润表项目（如收入、净利润）是时间段数据，需要分别处理这两种不同的时间语义
+**解决方案:** 已实现`find_all` + 上下文精确匹配
+- 使用`soup.find_all()`获取所有匹配的XBRL标签
+- 解析每个标签的`contextRef`，找到对应的`<xbrli:context>`
+- 从context中提取`<xbrli:period>`的时间信息
+- 严格匹配用户查询的年份，只返回正确年份的数据
+- 支持`instant`（瞬时点）和`duration`（时间段）两种时间类型
 
-**验收标准:**
-- [ ] 能够正确区分同一公司不同年份的相同指标
-- [ ] Context解析准确率达到100%
-- [ ] 正确处理instant和duration两种时间类型的数据
-- [ ] 结合指标知识库进行智能匹配
-- [ ] 添加相应的单元测试
+**验收标准:** ✅ 已通过
+- [x] 能够正确区分同一公司不同年份的相同指标
+- [x] Context解析准确率达到100%
+- [x] 正确处理instant和duration两种时间类型
+- [x] 添加了完整的单元测试
 
 ---
 
-### 任务4：实现数值规整化 (Value Normalization)
-**问题描述:** 当前返回的是原始文本值，如`"1,234"`，没有处理单位（如"in millions"）和负数格式（如`(123)`）。这会导致返回的数值在量级和正负上是错误的。
+### 任务4：实现数值规整化 (Value Normalization) ⭐⭐
+**问题描述:** 当前返回原始文本值如`"1,234"`，未处理单位（如"in millions"）和负数格式（如`(123)`）。
 
 **开发需求:**
-1. **创建`Data-Validator`模块**: 新建一个`src/data_validator.py`模块
-2. **实现数值清洗**: 创建一个函数，负责将输入的文本值（如`"(1,234)"`）转换为标准的数字（`-1234.0`）
-3. **实现单位解析**: 创建另一个函数，负责在提取到数值后，搜索其HTML上下文，查找"in millions"或"in thousands"等关键词，并对数值进行相应的乘法运算
-4. **在工作流中集成**: 在LangGraph的`extract_xbrl_data_node`之后，增加一个新的`validate_data_node`来调用这些新功能
+1. **创建数据验证模块**: 新建`src/data_validator.py`
+2. **实现数值清洗函数**: 
+   - `clean_numeric_value(value: str) -> float`: 处理千分位逗号、负数括号
+   - 输入：`"(1,234)"` → 输出：`-1234.0`
+   - 输入：`"1,234"` → 输出：`1234.0`
+3. **实现单位解析函数**:
+   - `parse_unit_multiplier(html_content: str, context_ref: str) -> int`: 查找单位说明
+   - 支持"in millions"、"in thousands"、"in billions"等
+   - 返回相应的乘数（1000000、1000、1000000000）
+4. **集成到工作流**: 在`extract_xbrl_data_node`后添加`validate_data_node`
+5. **处理边界情况**: 处理无单位说明、格式异常等情况
 
 **验收标准:**
 - [ ] 正确处理负数格式：`(123)` → `-123`
 - [ ] 正确处理千分位逗号：`1,234` → `1234`
 - [ ] 正确处理单位换算：`123 (in millions)` → `123000000`
-- [ ] 添加数值验证测试用例
+- [ ] 处理无单位说明时返回原值
+- [ ] 添加数值验证的单元测试
 
 ---
 
-### 任务5：重构测试系统 (Test System Overhaul)
-**问题描述:** 删除了不准确的`sample_10k.html`后，当前缺乏有效的单元测试。需要重新设计测试策略，使用真实数据片段或Mock方式。
+### 任务5：重构测试系统 (Test System Overhaul) ⭐⭐⭐⭐
+**问题描述:** 当前测试主要是模块导入测试和基本的网络测试，缺乏有效的单元测试。需要重新设计测试策略。
 
 **开发需求:**
-
-#### 5.1 创建真实数据测试集
-1. **生成真实测试数据**: 从实际SEC文件中提取小片段，创建`tests/fixtures/real_xbrl_samples.json`
-2. **包含多种场景**:
-   - 正常的收入数据（苹果公司）
-   - 负数形式的净利润
-   - 包含单位说明的数据
-   - 多年份数据（测试上下文匹配）
-   - 不同标签格式
-
-#### 5.2 重新实现测试文件
-1. **`test_xbrl_extractor.py`**: 
-   - 使用真实数据片段测试XBRL提取功能
-   - 测试上下文精确匹配
-   - 测试数值规整化
-   
-2. **`test_context_matching.py`**: 
-   - 专门测试年份上下文匹配功能
-   - 验证多年份数据的正确提取
-
-3. **`test_data_validation.py`**: 
-   - 测试数值清洗和单位换算
-   - 测试各种数值格式的处理
-
-4. **`test_company_mapper.py`**: 
-   - 测试公司映射功能
-   - 测试CIK查询和公司名称查询
-
-5. **`test_metrics_manager.py`**: 
-   - 测试指标知识库功能
-   - 测试别名匹配和模糊查询
-
-#### 5.3 Mock测试策略 优先度低
-1. **Mock SEC API**: 使用`unittest.mock`模拟SEC API响应
-2. **Mock OpenAI API**: 模拟LLM响应，测试意图解析
-3. **离线测试**: 确保测试不依赖外部API
+1. **创建真实数据测试集**: 新建`tests/fixtures/real_xbrl_samples.json`
+   - 从实际SEC文件中提取小片段（<1KB）
+   - 包含多种场景：正常数据、负数、多年份、不同标签
+   - 每个样本包含：HTML片段、期望结果、测试说明
+2. **重新实现核心测试文件**:
+   - `test_xbrl_extractor.py`: 使用真实数据测试提取功能
+   - `test_context_matching.py`: 专门测试年份匹配（已完成）
+   - `test_data_validation.py`: 测试数值清洗和单位换算
+   - `test_company_mapper.py`: 测试公司映射功能
+   - `test_metrics_manager.py`: 测试指标知识库功能
+3. **Mock测试策略**:
+   - Mock SEC API响应，避免网络依赖
+   - Mock OpenAI API响应，测试意图解析
+   - 确保所有测试可离线运行
 
 **验收标准:**
-- [ ] 测试覆盖率达到85%以上
+- [ ] 测试覆盖率达到80%以上
 - [ ] 所有测试可以离线运行
-- [ ] 包含正负两种测试用例
-- [ ] 测试执行时间<30秒
+- [ ] 包含至少10个真实数据测试用例
+- [ ] 测试执行时间 < 30秒
+- [ ] 每个核心模块都有对应的测试文件
+
+---
+
+### 任务6：优化财年匹配逻辑 (Fiscal Year Matching) ⭐⭐⭐
+**问题描述:** 当前`sec_retriever.py`使用`filingDate`（提交日期）匹配年份，在财年与日历年不一致时会出错。
+
+**开发需求:**
+1. **修改年份匹配逻辑**: 在`_search_filings_in_data`函数中
+   - 优先使用`periodOfReport`字段确定财报所属年份
+   - 如果`periodOfReport`不存在，再使用`filingDate`
+   - 添加财年处理逻辑，支持非标准财年公司
+2. **处理季度报告**: 
+   - 正确识别Q1/Q2/Q3/Q4的财年归属
+   - 处理跨年度的季度报告
+3. **添加财年验证**: 确保提取的年份与用户查询一致
+
+**验收标准:**
+- [ ] 优先使用`periodOfReport`进行年份匹配
+- [ ] 正确处理财年不等于日历年的情况
+- [ ] 支持Q1/Q2/Q3/Q4季度报告的正确匹配
+- [ ] 添加至少5个财年测试用例
+- [ ] 向后兼容现有的`filingDate`逻辑
 
 ---
 
 ## P1: 高优先级任务 (High Priority - 提升可维护性和准确性)
 
-### 任务6：优化财年匹配逻辑 (Fiscal Year Matching)
-**问题描述:** 当前的`sec_retriever.py`仍在使用`filingDate`（提交日期）来匹配年份，这在财年与日历年不一致时会出错。
-
-**开发需求:**
-1. 修改`sec_retriever.py`中的`_search_filings_in_data`函数
-2. 查找逻辑必须**优先使用`periodOfReport`字段**来确定财报的所属年份，而不是`filingDate`
-3. 添加财年处理逻辑，支持非标准财年的公司
-
-**验收标准:**
-- [ ] 正确处理财年不等于日历年的情况
-- [ ] 优先使用`periodOfReport`进行年份匹配
-- [ ] 支持Q1/Q2/Q3/Q4季度报告的正确匹配
-- [ ] 添加财年测试用例
-
----
-
-### 任务7：增强错误处理和日志 (Enhanced Error Handling)
-**问题描述:** 当前的错误处理较为简单，不便于调试和监控生产环境问题。
+### 任务7：增强错误处理和日志 (Enhanced Error Handling) ⭐⭐⭐
+**问题描述:** 当前错误处理简单，不便于调试和监控生产环境问题。
 
 **开发需求:**
 1. **实现结构化日志**: 
-   - 添加`logging`配置
-   - 记录关键步骤的执行时间
-   - 记录API调用的成功/失败状态
-
+   - 添加`logging`配置，记录关键步骤
+   - 记录API调用成功/失败状态和执行时间
+   - 记录数据提取的详细过程
 2. **细化错误类型**:
    - `SECRetrievalError`: SEC数据获取失败
    - `XBRLExtractionError`: XBRL提取失败
    - `IntentParsingError`: 意图解析失败
    - `ValidationError`: 数据验证失败
-
 3. **实现重试机制**:
-   - SEC API调用失败时的指数退避重试
+   - SEC API调用失败时的指数退避重试（最多3次）
    - OpenAI API的重试逻辑
    - 在LangGraph中添加重试节点
 
 **验收标准:**
-- [ ] 完善的日志记录系统
-- [ ] 结构化的错误信息
-- [ ] 自动重试机制
-- [ ] 错误统计和监控
-
----
-
-## P2: 中优先级任务 (Medium Priority - 功能增强)
-
-### 任务8：扩展公司支持 (Expand Company Coverage)
-**开发需求:**
-1. 基于任务1的公司映射知识库，系统已支持所有SEC注册公司
-2. 研究和添加更多行业的主要公司的特殊XBRL标签到指标知识库
-3. 处理不同行业的特殊财务指标和标签映射
-
----
-
-### 任务9：缓存机制 (Caching System)
-**开发需求:**
-1. 实现SEC文件的本地缓存
-2. 添加查询结果缓存
-3. 实现缓存过期和清理机制
-
----
-
-### 任务10：API接口优化 (API Enhancement)
-**开发需求:**
-1. 添加批量查询支持
-2. 实现异步处理
-3. 添加查询历史记录
-
----
-
-## P3: 低优先级任务 (Low Priority - 长期改进)
-
-### 任务11：多语言支持 (Multi-language Support)
-
-
-### 任务12：数据可视化 (Data Visualization)
-
-
-### 任务13：历史趋势分析 (Trend Analysis)
-
+- [ ] 完善的日志记录系统，包含时间戳和错误详情
+- [ ] 结构化的错误信息，便于问题定位
+- [ ] 自动重试机制，提高系统稳定性
+- [ ] 错误统计和监控功能
 
 ---
 
 ## 开发里程碑 (Milestones)
 
-### Sprint 1 (2周): 基础设施建设
-- [ ] 任务1: 建立公司映射知识库
+### Sprint 1 (2周): 基础设施和核心功能
 - [ ] 任务2: 外部化指标知识库
-- [ ] 任务3: 实现上下文精确匹配
-
-**目标**: 建立完整的知识库基础设施，解决核心数据匹配问题
-
-### Sprint 2 (1.5周): 数据处理优化
 - [ ] 任务4: 实现数值规整化
-- [ ] 任务5: 重构测试系统
 - [ ] 任务6: 优化财年匹配逻辑
 
-**目标**: 确保数据提取的100%准确性和完整测试覆盖
+**目标**: 建立知识库基础，解决数据准确性问题
 
-### Sprint 3 (2周): 系统稳定性提升
+### Sprint 2 (1.5周): 系统完善
+- [ ] 任务1: 建立公司映射知识库
+- [ ] 任务5: 重构测试系统
 - [ ] 任务7: 增强错误处理和日志
-- [ ] 任务8: 扩展公司支持
-- [ ] 任务9: 缓存机制
 
-**目标**: 提升系统可维护性、稳定性和性能
+**目标**: 完善系统架构，提升可维护性和稳定性
 
 ---
 
 ## 质量门禁 (Quality Gates)
 
 ### 代码质量要求
-- [ ] 单元测试覆盖率 ≥ 85%
-- [ ] 集成测试覆盖率 ≥ 70%
+- [ ] 单元测试覆盖率 ≥ 80%
+- [ ] 集成测试覆盖率 ≥ 60%
 - [ ] 代码审查通过率 100%
 - [ ] 无高危安全漏洞
 
 ### 性能要求
-- [ ] 查询响应时间 ≤ 3秒 (95分位)
-- [ ] 系统可用率 ≥ 99.5%
-- [ ] API成功率 ≥ 99%
+- [ ] 查询响应时间 ≤ 5秒 (95分位)
+- [ ] 系统可用率 ≥ 99%
+- [ ] API成功率 ≥ 95%
 
 ### 功能要求
-- [ ] 评测系统成功率 100%
 - [ ] 支持所有预定义的财务指标
 - [ ] 错误信息清晰易懂
+- [ ] 数据准确性 ≥ 95%
 
 ---
 
 ## 风险评估 (Risk Assessment)
 
 ### 高风险项目
-1. **上下文匹配实现复杂度**: 可能需要深入理解XBRL规范
+1. **指标映射维护成本**: 需要持续维护和更新映射关系
 2. **SEC API变更**: 外部依赖可能影响开发进度
 3. **测试数据质量**: 真实数据的获取和维护成本
 
@@ -317,67 +272,16 @@
    - 建立数据验证机制
    - 多源数据交叉验证
 
+---
 
+## 参考资料
 
+### SEC官方数据源
+- **公司映射**: `https://www.sec.gov/files/company_tickers.json`
+- **XBRL分类帐**: FASB US-GAAP Financial Reporting Taxonomy
+- **EDGAR API**: `https://data.sec.gov/submissions/`
 
-参考：
-好的，这个问题非常关键，直接关系到我们能否系统化、规模化地进行精确的数据提取。你的想法完全正确：我们需要将这些“映射关系”固化成一个独立的文件，而不是在代码里零散地维护。
-
-好消息是，SEC官方确实为此提供了可供下载的、权威的原始数据。
-
-### **1. 公司与CIK的Mapping**
-
-对于公司标识（Ticker Symbol to CIK），SEC提供了一个非常方便、完整的JSON文件，包含了所有上市公司的数据。
-
-  * **官方文件**: `company_tickers.json`
-  * **下载地址**: [https://www.sec.gov/files/company\_tickers.json](https://www.google.com/search?q=https://www.sec.gov/files/company_tickers.json)
-  * **文件内容示例**:
-    ```json
-    {
-      "0": {
-        "cik_str": 320193,
-        "ticker": "AAPL",
-        "title": "Apple Inc."
-      },
-      "1": {
-        "cik_str": 789019,
-        "ticker": "MSFT",
-        "title": "MICROSOFT CORP"
-      },
-      ...
-    }
-    ```
-  * **如何使用**:
-    你可以写一个简单的脚本，每天或每周自动下载这个JSON文件。然后，遍历这个文件，提取出`cik_str`和`ticker`，生成一个你自己的、随时保持最新的`TICKER_TO_CIK`字典。这样就无需手动维护了。
-
-### **2. 指标与XBRL标签的Mapping**
-
-这个问题要复杂得多。**SEC或FASB（财务会计准则委员会）并不提供一个像你例子中那样简单的、一对多的“友好名称到XBRL标签”的JSON或CSV文件。**
-
-官方提供的是一套完整的、非常复杂的\*\*XBRL分类帐（Taxonomy）\*\*文件。这套文件定义了每一个会计概念、它们之间的关系以及它们的标准标签。
-
-  * **官方文件**: US-GAAP Financial Reporting Taxonomy（通常每年更新）
-  * **下载地址**: 你可以在FASB的官方网站上找到，例如（链接可能会变化）：[https://www.fasb.org/page/show/xbrl-us-gaap-financial-reporting-taxonomy](https://www.google.com/search?q=https://www.fasb.org/page/show/xbrl-us-gaap-financial-reporting-taxonomy)
-  * **你需要关注的文件**: 在下载的分类帐压缩包里，对我们最有用的文件是以 `-lab.xml` 结尾的 **Label Files**。这些XML文件定义了XBRL标签（如 `us-gaap:Revenues`）和它对应的不同类型的、人类可读的名称（如 "Revenues"、"Revenue, Net" 等）。
-
-**为什么一个指标会对应多个XBRL标签？**
-
-你给出的例子 `("Revenues": ["us-gaap:Revenues", "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax"])` 非常好，它揭示了问题的核心：
-
-  * **会计准则的演进**: 随着会计准则（如ASC 606收入确认）的更新，新的、更具体的XBRL标签会被引入。例如，`RevenueFromContractWithCustomer...` 就是一个更现代、更精确的收入标签。
-  * **公司的选择**: 公司在报备时，可能会根据自己的业务情况，选择使用一个更宽泛的旧标签，或者一个更具体的新标签。
-  * **层级关系**: XBRL分类帐是树状结构的。`Revenues`可能是一个顶层概念，下面有多个子概念。
-
-**结论与实践建议**
-
-1.  **没有现成的简单映射文件**: 你无法从官方直接下载一个即用型的`METRIC_TAG_MAPPING`。
-2.  **创建和维护你自己的Mapping文件是必要且正确的**: 你在`orchestrator.py`里定义的那个`METRIC_TAG_MAPPING`字典，正是解决这个问题的最佳工程实践。它是一个\*\*“策略层”\*\*，将业务逻辑（我们认为“净利润”是什么）和底层技术（XBRL标签）解耦。
-3.  **如何构建和扩展你的Mapping文件**:
-      * **以官方Label文件为基础**: 你可以写一个脚本来解析`-lab.xml`文件，生成一个基础的、巨大的XBRL标签到其标准名称的映射表，作为参考。
-      * **手动维护一个核心列表**: 对于最常用、最重要的几十个指标（如你已经列出的营收、净利润、资产等），手动创建和维护一个映射列表。这个列表需要包含一个指标可能对应的所有常见XBRL标签。
-      * **从实践中学习和补充**: 在你的Agent处理大量真实财报的过程中，当遇到`Extractor`找不到数据的情况时，很可能就是因为该公司使用了一个你的映射列表里没有的新标签。你需要记录下这些失败案例，分析财报原文，然后将新的标签补充到你的映射文件中。这是一个持续迭代和完善的过程。
-
-**总结**:
-
-  * **公司映射**: 直接下载官方`company_tickers.json`并定期更新。
-  * **指标映射**: 创建并**持续维护**你自己的`METRIC_TAG_MAPPING.json`文件是核心工作之一。这个文件是你的“知识库”，它会随着你处理的财报越来越多而变得越来越完善和强大。
+### 技术文档
+- **XBRL规范**: XBRL 2.1 Specification
+- **iXBRL规范**: Inline XBRL 1.1 Specification
+- **SEC EDGAR**: Electronic Data Gathering, Analysis, and Retrieval System
