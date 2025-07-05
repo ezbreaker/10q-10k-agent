@@ -1,0 +1,409 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "nlu_accuracy": 100.0,
+    "e2e_accuracy": 100.0,
+    "avg_response_time": 2.4552578210830687,
+    "evaluation_time": "0:00:29.563693"
+  },
+  "category_stats": {
+    "basic_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 3.4837560653686523,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "english_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 2.81601881980896,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "assets_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 2.541445016860962,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "quarterly_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 2.317988157272339,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "equity_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 3.298769950866699,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "liabilities_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 4.548082113265991,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "net_income_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 2.3289921283721924,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "revenue_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 1.9553980827331543,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "invalid_query": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 0.6028409004211426,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    },
+    "unsupported_ticker": {
+      "total": 1,
+      "nlu_correct": 1,
+      "e2e_correct": 1,
+      "avg_response_time": 0.6592869758605957,
+      "nlu_accuracy": 100.0,
+      "e2e_accuracy": 100.0
+    }
+  },
+  "detailed_results": [
+    {
+      "test_id": "test_001",
+      "query": "苹果公司2022年的营业收入是多少？",
+      "category": "basic_query",
+      "description": "基本收入查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 3.4837560653686523,
+      "expected_intent": {
+        "ticker": "AAPL",
+        "metric": "Revenues",
+        "year": 2022,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "苹果公司2022年的营业收入是多少？",
+        "parsed_intent": {
+          "ticker": "AAPL",
+          "metric": "Revenues",
+          "year": "2022",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "AAPL",
+          "metric": "Revenues",
+          "xbrl_tag": "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+          "year": "2022",
+          "form_type": "10-K",
+          "value": "316,199",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_002",
+      "query": "MSFT 2022 net income",
+      "category": "english_query",
+      "description": "英文查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 2.81601881980896,
+      "expected_intent": {
+        "ticker": "MSFT",
+        "metric": "NetIncome",
+        "year": 2022,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "MSFT 2022 net income",
+        "parsed_intent": {
+          "ticker": "MSFT",
+          "metric": "NetIncome",
+          "year": "2022",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "MSFT",
+          "metric": "NetIncome",
+          "xbrl_tag": "us-gaap:NetIncomeLoss",
+          "year": "2022",
+          "form_type": "10-K",
+          "value": "72,738",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_003",
+      "query": "谷歌2022年的总资产有多少？",
+      "category": "assets_query",
+      "description": "资产查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 2.541445016860962,
+      "expected_intent": {
+        "ticker": "GOOGL",
+        "metric": "TotalAssets",
+        "year": 2022,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "谷歌2022年的总资产有多少？",
+        "parsed_intent": {
+          "ticker": "GOOGL",
+          "metric": "TotalAssets",
+          "year": "2022",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "GOOGL",
+          "metric": "TotalAssets",
+          "xbrl_tag": "us-gaap:Assets",
+          "year": "2022",
+          "form_type": "10-K",
+          "value": "319,616",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_004",
+      "query": "Amazon 2023 Q1 revenue",
+      "category": "quarterly_query",
+      "description": "季度查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 2.317988157272339,
+      "expected_intent": {
+        "ticker": "AMZN",
+        "metric": "Revenues",
+        "year": 2023,
+        "form_type": "10-Q"
+      },
+      "actual_result": {
+        "query": "Amazon 2023 Q1 revenue",
+        "parsed_intent": {
+          "ticker": "AMZN",
+          "metric": "Revenues",
+          "year": "2023",
+          "form_type": "10-Q"
+        },
+        "result": {
+          "ticker": "AMZN",
+          "metric": "Revenues",
+          "xbrl_tag": "us-gaap:Revenues",
+          "year": "2023",
+          "form_type": "10-Q",
+          "value": "459",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_005",
+      "query": "特斯拉2023年股东权益是多少？",
+      "category": "equity_query",
+      "description": "股东权益查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 3.298769950866699,
+      "expected_intent": {
+        "ticker": "TSLA",
+        "metric": "StockholdersEquity",
+        "year": 2023,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "特斯拉2023年股东权益是多少？",
+        "parsed_intent": {
+          "ticker": "TSLA",
+          "metric": "StockholdersEquity",
+          "year": "2023",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "TSLA",
+          "metric": "StockholdersEquity",
+          "xbrl_tag": "us-gaap:StockholdersEquity",
+          "year": "2023",
+          "form_type": "10-K",
+          "value": "44,704",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_006",
+      "query": "Meta platforms total liabilities 2023",
+      "category": "liabilities_query",
+      "description": "负债查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 4.548082113265991,
+      "expected_intent": {
+        "ticker": "META",
+        "metric": "TotalLiabilities",
+        "year": 2023,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "Meta platforms total liabilities 2023",
+        "parsed_intent": {
+          "ticker": "META",
+          "metric": "TotalLiabilities",
+          "year": "2023",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "META",
+          "metric": "TotalLiabilities",
+          "xbrl_tag": "us-gaap:Liabilities",
+          "year": "2023",
+          "form_type": "10-K",
+          "value": "60,014",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_007",
+      "query": "英伟达2023年的净利润",
+      "category": "net_income_query",
+      "description": "净利润查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 2.3289921283721924,
+      "expected_intent": {
+        "ticker": "NVDA",
+        "metric": "NetIncome",
+        "year": 2023,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "英伟达2023年的净利润",
+        "parsed_intent": {
+          "ticker": "NVDA",
+          "metric": "NetIncome",
+          "year": "2023",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "NVDA",
+          "metric": "NetIncome",
+          "xbrl_tag": "us-gaap:NetIncomeLoss",
+          "year": "2023",
+          "form_type": "10-K",
+          "value": "4,368",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_008",
+      "query": "Netflix 2022 revenues",
+      "category": "revenue_query",
+      "description": "收入查询",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 1.9553980827331543,
+      "expected_intent": {
+        "ticker": "NFLX",
+        "metric": "Revenues",
+        "year": 2022,
+        "form_type": "10-K"
+      },
+      "actual_result": {
+        "query": "Netflix 2022 revenues",
+        "parsed_intent": {
+          "ticker": "NFLX",
+          "metric": "Revenues",
+          "year": "2022",
+          "form_type": "10-K"
+        },
+        "result": {
+          "ticker": "NFLX",
+          "metric": "Revenues",
+          "xbrl_tag": "us-gaap:Revenues",
+          "year": "2022",
+          "form_type": "10-K",
+          "value": "29,697,844",
+          "unit": null
+        },
+        "success": true
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_009",
+      "query": "什么是区块链技术？",
+      "category": "invalid_query",
+      "description": "无效查询测试",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 0.6028409004211426,
+      "expected_intent": {
+        "error": "无法理解查询"
+      },
+      "actual_result": {
+        "query": "什么是区块链技术？",
+        "error": "无法理解查询",
+        "success": false
+      },
+      "error_message": ""
+    },
+    {
+      "test_id": "test_010",
+      "query": "IBM 2023 revenue",
+      "category": "unsupported_ticker",
+      "description": "不支持的股票代码",
+      "nlu_correct": true,
+      "end_to_end_correct": true,
+      "response_time": 0.6592869758605957,
+      "expected_intent": {
+        "error": "不支持的股票代码"
+      },
+      "actual_result": {
+        "query": "IBM 2023 revenue",
+        "error": "无法理解查询",
+        "success": false
+      },
+      "error_message": ""
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+requests
+beautifulsoup4
+lxml
+pytest
+openai
+pydantic
+python-dotenv
+pytest-asyncio
+# LangGraph依赖 (可选)
+langgraph
+langchain
+langchain-openai 

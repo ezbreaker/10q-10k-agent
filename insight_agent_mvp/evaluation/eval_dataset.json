@@ -1,0 +1,126 @@
+[
+  {
+    "id": "test_001",
+    "query": "苹果公司2022年的营业收入是多少？",
+    "expected_intent": {
+      "ticker": "AAPL",
+      "metric": "Revenues",
+      "year": 2022,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:Revenues",
+    "category": "basic_query",
+    "description": "基本收入查询"
+  },
+  {
+    "id": "test_002", 
+    "query": "MSFT 2022 net income",
+    "expected_intent": {
+      "ticker": "MSFT",
+      "metric": "NetIncome",
+      "year": 2022,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:NetIncomeLoss",
+    "category": "english_query",
+    "description": "英文查询"
+  },
+  {
+    "id": "test_003",
+    "query": "谷歌2022年的总资产有多少？",
+    "expected_intent": {
+      "ticker": "GOOGL",
+      "metric": "TotalAssets", 
+      "year": 2022,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:Assets",
+    "category": "assets_query",
+    "description": "资产查询"
+  },
+  {
+    "id": "test_004",
+    "query": "Amazon 2023 Q1 revenue",
+    "expected_intent": {
+      "ticker": "AMZN",
+      "metric": "Revenues",
+      "year": 2023,
+      "form_type": "10-Q"
+    },
+    "expected_xbrl_tag": "us-gaap:Revenues", 
+    "category": "quarterly_query",
+    "description": "季度查询"
+  },
+  {
+    "id": "test_005",
+    "query": "特斯拉2023年股东权益是多少？",
+    "expected_intent": {
+      "ticker": "TSLA",
+      "metric": "StockholdersEquity",
+      "year": 2023,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:StockholdersEquity",
+    "category": "equity_query", 
+    "description": "股东权益查询"
+  },
+  {
+    "id": "test_006",
+    "query": "Meta platforms total liabilities 2023",
+    "expected_intent": {
+      "ticker": "META",
+      "metric": "TotalLiabilities",
+      "year": 2023,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:Liabilities",
+    "category": "liabilities_query",
+    "description": "负债查询"
+  },
+  {
+    "id": "test_007",
+    "query": "英伟达2023年的净利润",
+    "expected_intent": {
+      "ticker": "NVDA", 
+      "metric": "NetIncome",
+      "year": 2023,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:NetIncomeLoss",
+    "category": "net_income_query",
+    "description": "净利润查询"
+  },
+  {
+    "id": "test_008",
+    "query": "Netflix 2022 revenues",
+    "expected_intent": {
+      "ticker": "NFLX",
+      "metric": "Revenues", 
+      "year": 2022,
+      "form_type": "10-K"
+    },
+    "expected_xbrl_tag": "us-gaap:Revenues",
+    "category": "revenue_query",
+    "description": "收入查询"
+  },
+  {
+    "id": "test_009",
+    "query": "什么是区块链技术？",
+    "expected_intent": {
+      "error": "无法理解查询"
+    },
+    "expected_xbrl_tag": null,
+    "category": "invalid_query",
+    "description": "无效查询测试"
+  },
+  {
+    "id": "test_010",
+    "query": "IBM 2023 revenue",
+    "expected_intent": {
+      "error": "不支持的股票代码"
+    },
+    "expected_xbrl_tag": null,
+    "category": "unsupported_ticker",
+    "description": "不支持的股票代码"
+  }
+] 
